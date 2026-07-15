@@ -103,6 +103,7 @@
 <script>
 const $ = (s) => document.querySelector(s);
 const gmap = (p) => `https://www.google.com/maps/dir/?api=1&destination=${p.lat},${p.lng}`;
+const nmap = (p) => `https://map.naver.com/p/search/${encodeURIComponent(p.ko || p.name)}`;
 
 // ---------- 密碼解鎖：若 sessionStorage 有解密後的完整版資料就用它 ----------
 let DATA = TRIP;
@@ -238,7 +239,7 @@ function initMap() {
   for (const p of DATA.pois) {
     const color = DAY_COLORS[p.day] || DAY_COLORS[0];
     const m = L.circleMarker([p.lat, p.lng], { radius: 9, color, fillColor: color, fillOpacity: .85, weight: 2 }).addTo(map);
-    m.bindPopup(`<b>${p.name}</b><br>${p.note || ""}<br>${p.day ? "Day " + p.day : "候選景點"}<br><a href="${gmap(p)}" target="_blank">🧭 Google Maps 導航</a>`);
+    m.bindPopup(`<b>${p.name}</b><br>${p.note || ""}<br>${p.day ? "Day " + p.day : "候選景點"}<br><a href="${nmap(p)}" target="_blank">🟢 Naver 地圖</a>　<a href="${gmap(p)}" target="_blank">🧭 Google</a>`);
     bounds.push([p.lat, p.lng]);
   }
   map.fitBounds(bounds, { padding: [30, 30] });
@@ -246,7 +247,7 @@ function initMap() {
 $("#poi-list").innerHTML = DATA.pois.map(p => `
   <div class="poi-item">
     <span><b style="color:${DAY_COLORS[p.day] || DAY_COLORS[0]}">●</b> ${p.name} <span class="muted">${p.note || ""}</span></span>
-    <a href="${gmap(p)}" target="_blank">導航 →</a>
+    <span><a href="${nmap(p)}" target="_blank">Naver →</a>　<a href="${gmap(p)}" target="_blank">Google →</a></span>
   </div>`).join("");
 
 // ---------- 分頁切換 ----------
