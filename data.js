@@ -19,7 +19,7 @@ const TRIP = {
   flight: {
     bookingRef: "（代號存於信箱）",
     airline: "中華航空 China Airlines",
-    totalPrice: "TWD 27,334（2 人來回）",
+    totalPrice: "🔒（2 人來回）",
     outbound: {
       flightNo: "CI 186",
       date: "2026/8/18（二）",
@@ -65,7 +65,7 @@ const TRIP = {
       address: "271, Haeundaehaebyeon-ro, Haeundae-gu, Busan（해운대해변로 271）",
       phone: "+82 51-741-3838",
       confirmation: "Booking.com （確認碼存於信箱）",
-      note: "海景豪華雙人房・3 晚・總價 KRW 681,000（含稅）。8/12 23:59（韓國時間）前可免費取消，8/11 自動扣款。",
+      note: "海景豪華雙人房・3 晚・總價 🔒（含稅）。8/12 23:59（韓國時間）前可免費取消，8/11 自動扣款。",
     },
   ],
 
