@@ -36,7 +36,7 @@ const TRIP = {
       arr: { time: "21:20", airport: "台北桃園 TPE 第一航廈" },
       duration: "2 小時 20 分・直飛",
       aircraft: "A321neo・經濟艙",
-      seats: "46K（柏儒）／46J（嘉怡）",
+      seats: "🔒",
     },
     tickets: [
       { name: "柏儒", number: "（票號存於信箱）" },
@@ -123,7 +123,7 @@ const TRIP = {
       items: [
         { time: "11:00", title: "MS 飯店退房", note: "行李可寄放飯店櫃檯，繼續玩到傍晚" },
         { time: "17:30", title: "前往金海機場", note: "預留報到時間" },
-        { time: "20:00", title: "CI 187 起飛 → 台北", note: "座位 46K / 46J" },
+        { time: "20:00", title: "CI 187 起飛 → 台北", note: "座位 🔒" },
         { time: "21:20", title: "抵達桃園機場 T1", note: "" },
       ],
     },
