@@ -19,6 +19,8 @@
   header h1 { font-size: 1.7rem; letter-spacing: .05em; text-shadow: 0 2px 0 rgba(0,0,0,.08); }
   header .sub { opacity: .95; font-size: .95rem; margin-top: 6px; }
   header .ribbon { display: inline-block; background: #fff; color: #e75480; font-weight: 800; font-size: .85rem; border-radius: 999px; padding: 3px 18px; margin-top: 10px; box-shadow: 0 2px 6px rgba(0,0,0,.1); }
+  .lock-area { margin-top: 10px; font-size: .82rem; }
+  .lock-area a { color: #fff; text-decoration: underline; cursor: pointer; }
 
   nav { position: sticky; top: 0; z-index: 1000; background: var(--card); border-bottom: 1px solid var(--line); display: flex; overflow-x: auto; }
   nav button { flex: 1; min-width: 90px; padding: 12px 8px; border: none; background: none; font-size: .95rem; color: var(--sub); cursor: pointer; border-bottom: 3px solid transparent; white-space: nowrap; }
@@ -69,6 +71,7 @@
     <h1 id="trip-title"></h1>
     <div class="sub" id="trip-sub"></div>
     <div class="ribbon">💗 Phoebe & 柏儒 的旅遊手帳 💗</div>
+    <div id="lock-area" class="lock-area"></div>
   </div>
 </header>
 
@@ -101,9 +104,44 @@
 const $ = (s) => document.querySelector(s);
 const gmap = (p) => `https://www.google.com/maps/dir/?api=1&destination=${p.lat},${p.lng}`;
 
+// ---------- 密碼解鎖：若 sessionStorage 有解密後的完整版資料就用它 ----------
+let DATA = TRIP;
+try {
+  const full = sessionStorage.getItem("tripFull");
+  if (full) DATA = new Function(full + "\n;return TRIP;")();
+} catch (e) { sessionStorage.removeItem("tripFull"); }
+
+const b64u8 = (s) => Uint8Array.from(atob(s), c => c.charCodeAt(0));
+async function decryptSecret(blob, pw) {
+  const km = await crypto.subtle.importKey("raw", new TextEncoder().encode(pw), "PBKDF2", false, ["deriveKey"]);
+  const key = await crypto.subtle.deriveKey(
+    { name: "PBKDF2", salt: b64u8(blob.salt), iterations: 200000, hash: "SHA-256" },
+    km, { name: "AES-GCM", length: 256 }, false, ["decrypt"]);
+  const pt = await crypto.subtle.decrypt({ name: "AES-GCM", iv: b64u8(blob.iv) }, key, b64u8(blob.ct));
+  return new TextDecoder().decode(pt);
+}
+async function unlockTrip() {
+  const pw = prompt("輸入密碼，顯示票價與訂位資訊 🔑");
+  if (!pw) return;
+  try {
+    const res = await fetch("secret.enc");
+    if (!res.ok) throw new Error("no secret");
+    const dec = await decryptSecret(await res.json(), pw);
+    sessionStorage.setItem("tripFull", dec);
+    location.reload();
+  } catch (e) {
+    alert("密碼不對，或這一版沒有加密資料 🥲");
+  }
+}
+function lockTrip() { sessionStorage.removeItem("tripFull"); location.reload(); }
+
 // ---------- header ----------
-$("#trip-title").textContent = TRIP.title;
-$("#trip-sub").textContent = `${TRIP.dateRange}・${TRIP.travelers.join("、")}`;
+$("#trip-title").textContent = DATA.title;
+$("#trip-sub").textContent = `${DATA.dateRange}・${DATA.travelers.join("、")}`;
+const isUnlocked = !!sessionStorage.getItem("tripFull");
+$("#lock-area").innerHTML = isUnlocked
+  ? `🔓 完整資訊顯示中 <a href="javascript:lockTrip()">（鎖回）</a>`
+  : `<a href="javascript:unlockTrip()">🔒 輸入密碼看完整資訊</a>`;
 
 // ---------- 總覽 ----------
 function flightCard(leg, dir) {
@@ -120,10 +158,10 @@ function flightCard(leg, dir) {
   </div>`;
 }
 
-const f = TRIP.flight;
+const f = DATA.flight;
 let overviewHTML = "";
-if (TRIP.notes && TRIP.notes.length) {
-  overviewHTML += `<div class="card warn"><h2>📌 注意事項</h2>${TRIP.notes.map(n => `<div style="padding:3px 0">${n}</div>`).join("")}</div>`;
+if (DATA.notes && DATA.notes.length) {
+  overviewHTML += `<div class="card warn"><h2>📌 注意事項</h2>${DATA.notes.map(n => `<div style="padding:3px 0">${n}</div>`).join("")}</div>`;
 }
 overviewHTML += `
   <div class="card">
@@ -139,7 +177,7 @@ overviewHTML += `
   ${flightCard(f.inbound, "🛬 回程")}
 `;
 
-for (const h of TRIP.lodging) {
+for (const h of DATA.lodging) {
   if (h.status === "todo" || h.status === "cancelled") {
     overviewHTML += `<div class="card warn"><h2>🏨 住宿：${h.name}</h2><div>${h.note}</div></div>`;
   } else {
@@ -161,7 +199,7 @@ $("#tab-overview").innerHTML = overviewHTML;
 
 // ---------- 每日行程 ----------
 const dayTabs = $("#day-tabs");
-TRIP.days.forEach((d, i) => {
+DATA.days.forEach((d, i) => {
   const b = document.createElement("button");
   b.textContent = d.label.split("・")[0] + " " + d.date;
   b.onclick = () => showDay(i);
@@ -169,7 +207,7 @@ TRIP.days.forEach((d, i) => {
 });
 function showDay(i) {
   dayTabs.querySelectorAll("button").forEach((b, j) => b.classList.toggle("active", i === j));
-  const d = TRIP.days[i];
+  const d = DATA.days[i];
   const handout = d.image ? `
     <div class="handout">
       <a href="${d.image}" target="_blank"><img src="${d.image}" alt="${d.label} 手帳圖" onerror="this.parentElement.parentElement.style.display='none'"></a>
@@ -197,7 +235,7 @@ function initMap() {
     attribution: "© OpenStreetMap"
   }).addTo(map);
   const bounds = [];
-  for (const p of TRIP.pois) {
+  for (const p of DATA.pois) {
     const color = DAY_COLORS[p.day] || DAY_COLORS[0];
     const m = L.circleMarker([p.lat, p.lng], { radius: 9, color, fillColor: color, fillOpacity: .85, weight: 2 }).addTo(map);
     m.bindPopup(`<b>${p.name}</b><br>${p.note || ""}<br>${p.day ? "Day " + p.day : "候選景點"}<br><a href="${gmap(p)}" target="_blank">🧭 Google Maps 導航</a>`);
@@ -205,7 +243,7 @@ function initMap() {
   }
   map.fitBounds(bounds, { padding: [30, 30] });
 }
-$("#poi-list").innerHTML = TRIP.pois.map(p => `
+$("#poi-list").innerHTML = DATA.pois.map(p => `
   <div class="poi-item">
     <span><b style="color:${DAY_COLORS[p.day] || DAY_COLORS[0]}">●</b> ${p.name} <span class="muted">${p.note || ""}</span></span>
     <a href="${gmap(p)}" target="_blank">導航 →</a>
