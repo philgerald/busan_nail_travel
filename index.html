@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>釜山之旅 2026</title>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+<style>
+  :root {
+    --bg: #fff0f5; --card: #fffafd; --ink: #5d4048; --sub: #b08595;
+    --accent: #e75480; --accent-soft: #ffe0ec; --warn-bg: #fff3e6; --warn-ink: #c2703d;
+    --line: #ffd6e5;
+  }
+  * { box-sizing: border-box; margin: 0; }
+  body { font-family: "Segoe UI", "Noto Sans TC", "Microsoft JhengHei", sans-serif; background: var(--bg); color: var(--ink); line-height: 1.6; }
+  .wrap { max-width: 860px; margin: 0 auto; padding: 16px; }
+
+  header { background: linear-gradient(135deg, #ff9ebb, #e75480); color: #fff; padding: 28px 16px; text-align: center; }
+  header h1 { font-size: 1.7rem; letter-spacing: .05em; text-shadow: 0 2px 0 rgba(0,0,0,.08); }
+  header .sub { opacity: .95; font-size: .95rem; margin-top: 6px; }
+  header .ribbon { display: inline-block; background: #fff; color: #e75480; font-weight: 800; font-size: .85rem; border-radius: 999px; padding: 3px 18px; margin-top: 10px; box-shadow: 0 2px 6px rgba(0,0,0,.1); }
+
+  nav { position: sticky; top: 0; z-index: 1000; background: var(--card); border-bottom: 1px solid var(--line); display: flex; overflow-x: auto; }
+  nav button { flex: 1; min-width: 90px; padding: 12px 8px; border: none; background: none; font-size: .95rem; color: var(--sub); cursor: pointer; border-bottom: 3px solid transparent; white-space: nowrap; }
+  nav button.active { color: var(--accent); border-bottom-color: var(--accent); font-weight: 700; }
+
+  section.tab { display: none; }
+  section.tab.active { display: block; }
+
+  .card { background: var(--card); border: 2px dashed var(--line); border-radius: 20px; padding: 16px; margin: 14px 0; box-shadow: 0 3px 10px rgba(231, 84, 128, .07); }
+  .card h2 { font-size: 1.05rem; margin-bottom: 10px; display: flex; align-items: center; gap: 8px; }
+  .badge { font-size: .72rem; background: var(--accent-soft); color: var(--accent); padding: 2px 8px; border-radius: 999px; font-weight: 700; }
+  .warn { background: var(--warn-bg); color: var(--warn-ink); border: 2px dashed #ffc999; }
+
+  .flight-row { display: flex; align-items: center; gap: 12px; margin: 10px 0; flex-wrap: wrap; }
+  .flight-time { font-size: 1.4rem; font-weight: 800; }
+  .flight-arrow { color: var(--sub); flex: 1; text-align: center; border-bottom: 2px dotted var(--line); position: relative; min-width: 60px; font-size: .8rem; padding-bottom: 4px; }
+  .kv { display: grid; grid-template-columns: auto 1fr; gap: 2px 14px; font-size: .9rem; }
+  .kv dt { color: var(--sub); }
+  .kv dd { font-weight: 600; }
+  .muted { color: var(--sub); font-size: .85rem; }
+
+  .day-tabs { display: flex; gap: 8px; overflow-x: auto; padding: 4px 0; }
+  .day-tabs button { border: 1px solid var(--line); background: var(--card); border-radius: 999px; padding: 6px 14px; cursor: pointer; white-space: nowrap; font-size: .88rem; }
+  .day-tabs button.active { background: var(--accent); border-color: var(--accent); color: #fff; font-weight: 700; box-shadow: 0 2px 6px rgba(231,84,128,.3); }
+
+  .handout { text-align: center; margin: 14px 0; }
+  .handout img { max-width: 100%; border-radius: 20px; border: 3px solid #fff; box-shadow: 0 4px 16px rgba(231,84,128,.18); cursor: zoom-in; }
+  .handout .cap { font-size: .8rem; color: var(--sub); margin-top: 6px; }
+
+  .timeline { list-style: none; padding-left: 4px; }
+  .timeline li { display: flex; gap: 12px; padding: 10px 0; border-bottom: 1px dashed var(--line); }
+  .timeline li:last-child { border-bottom: none; }
+  .timeline .t { font-weight: 800; color: var(--accent); min-width: 52px; }
+  .timeline .n { color: var(--sub); font-size: .85rem; }
+
+  #map { height: 62vh; min-height: 380px; border-radius: 14px; border: 1px solid var(--line); }
+  .poi-list { margin-top: 10px; }
+  .poi-list a { color: var(--accent); text-decoration: none; font-size: .85rem; }
+  .poi-item { display: flex; justify-content: space-between; gap: 10px; padding: 8px 4px; border-bottom: 1px dashed var(--line); font-size: .92rem; flex-wrap: wrap; }
+
+  footer { text-align: center; color: var(--sub); font-size: .8rem; padding: 24px 0 40px; }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="wrap">
+    <h1 id="trip-title"></h1>
+    <div class="sub" id="trip-sub"></div>
+    <div class="ribbon">💗 Phoebe & 柏儒 的旅遊手帳 💗</div>
+  </div>
+</header>
+
+<nav>
+  <button data-tab="overview" class="active">📋 總覽</button>
+  <button data-tab="itinerary">🗓️ 每日行程</button>
+  <button data-tab="map">🗺️ 地圖</button>
+</nav>
+
+<div class="wrap">
+  <section class="tab active" id="tab-overview"></section>
+  <section class="tab" id="tab-itinerary">
+    <div class="day-tabs" id="day-tabs"></div>
+    <div id="day-content"></div>
+  </section>
+  <section class="tab" id="tab-map">
+    <div class="card">
+      <h2>景點地圖 <span class="badge">點圖釘看導航連結</span></h2>
+      <div id="map"></div>
+      <div class="poi-list" id="poi-list"></div>
+    </div>
+  </section>
+</div>
+
+<footer>🌸 資料更新請編輯 data.js ・ 出發前記得再核對航班時間 🌸</footer>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="data.js"></script>
+<script>
+const $ = (s) => document.querySelector(s);
+const gmap = (p) => `https://www.google.com/maps/dir/?api=1&destination=${p.lat},${p.lng}`;
+
+// ---------- header ----------
+$("#trip-title").textContent = TRIP.title;
+$("#trip-sub").textContent = `${TRIP.dateRange}・${TRIP.travelers.join("、")}`;
+
+// ---------- 總覽 ----------
+function flightCard(leg, dir) {
+  return `
+  <div class="card">
+    <h2>${dir} <span class="badge">${leg.flightNo}</span></h2>
+    <div class="muted">${leg.date}・${leg.duration}・${leg.aircraft}</div>
+    <div class="flight-row">
+      <div><div class="flight-time">${leg.dep.time}</div><div class="muted">${leg.dep.airport}</div></div>
+      <div class="flight-arrow">✈</div>
+      <div><div class="flight-time">${leg.arr.time}</div><div class="muted">${leg.arr.airport}</div></div>
+    </div>
+    <div class="muted">座位：${leg.seats}</div>
+  </div>`;
+}
+
+const f = TRIP.flight;
+let overviewHTML = "";
+if (TRIP.notes && TRIP.notes.length) {
+  overviewHTML += `<div class="card warn"><h2>📌 注意事項</h2>${TRIP.notes.map(n => `<div style="padding:3px 0">${n}</div>`).join("")}</div>`;
+}
+overviewHTML += `
+  <div class="card">
+    <h2>✈️ 機票資訊 <span class="badge">已確認</span></h2>
+    <dl class="kv">
+      <dt>航空公司</dt><dd>${f.airline}</dd>
+      <dt>訂位代號</dt><dd>${f.bookingRef}</dd>
+      <dt>總價</dt><dd>${f.totalPrice}</dd>
+      ${f.tickets.map(t => `<dt>票號（${t.name}）</dt><dd>${t.number}</dd>`).join("")}
+    </dl>
+  </div>
+  ${flightCard(f.outbound, "🛫 去程")}
+  ${flightCard(f.inbound, "🛬 回程")}
+`;
+
+for (const h of TRIP.lodging) {
+  if (h.status === "todo" || h.status === "cancelled") {
+    overviewHTML += `<div class="card warn"><h2>🏨 住宿：${h.name}</h2><div>${h.note}</div></div>`;
+  } else {
+    overviewHTML += `
+    <div class="card">
+      <h2>🏨 ${h.name} <span class="badge">${h.badge || "已確認"}</span></h2>
+      <dl class="kv">
+        <dt>入住</dt><dd>${h.checkIn || ""}</dd>
+        <dt>退房</dt><dd>${h.checkOut || ""}</dd>
+        <dt>地址</dt><dd>${h.address || ""}</dd>
+        <dt>電話</dt><dd>${h.phone || ""}</dd>
+        <dt>確認碼</dt><dd>${h.confirmation || ""}</dd>
+      </dl>
+      ${h.note ? `<div class="muted" style="margin-top:6px">${h.note}</div>` : ""}
+    </div>`;
+  }
+}
+$("#tab-overview").innerHTML = overviewHTML;
+
+// ---------- 每日行程 ----------
+const dayTabs = $("#day-tabs");
+TRIP.days.forEach((d, i) => {
+  const b = document.createElement("button");
+  b.textContent = d.label.split("・")[0] + " " + d.date;
+  b.onclick = () => showDay(i);
+  dayTabs.appendChild(b);
+});
+function showDay(i) {
+  dayTabs.querySelectorAll("button").forEach((b, j) => b.classList.toggle("active", i === j));
+  const d = TRIP.days[i];
+  const handout = d.image ? `
+    <div class="handout">
+      <a href="${d.image}" target="_blank"><img src="${d.image}" alt="${d.label} 手帳圖" onerror="this.parentElement.parentElement.style.display='none'"></a>
+      <div class="cap">🎨 Phoebe 設計的行程手帳（點圖放大）</div>
+    </div>` : "";
+  $("#day-content").innerHTML = `
+    ${handout}
+    <div class="card">
+      <h2>${d.label}<span class="badge">${d.date}</span></h2>
+      <ul class="timeline">
+        ${d.items.map(it => `<li><span class="t">${it.time}</span><span><div>${it.title}</div>${it.note ? `<div class="n">${it.note}</div>` : ""}</span></li>`).join("")}
+      </ul>
+    </div>`;
+}
+showDay(0);
+
+// ---------- 地圖 ----------
+const DAY_COLORS = ["#9ca3af", "#ef4444", "#f59e0b", "#10b981", "#3b82f6", "#8b5cf6", "#ec4899"];
+let map, mapReady = false;
+function initMap() {
+  if (mapReady) return;
+  mapReady = true;
+  map = L.map("map");
+  L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+    attribution: "© OpenStreetMap"
+  }).addTo(map);
+  const bounds = [];
+  for (const p of TRIP.pois) {
+    const color = DAY_COLORS[p.day] || DAY_COLORS[0];
+    const m = L.circleMarker([p.lat, p.lng], { radius: 9, color, fillColor: color, fillOpacity: .85, weight: 2 }).addTo(map);
+    m.bindPopup(`<b>${p.name}</b><br>${p.note || ""}<br>${p.day ? "Day " + p.day : "候選景點"}<br><a href="${gmap(p)}" target="_blank">🧭 Google Maps 導航</a>`);
+    bounds.push([p.lat, p.lng]);
+  }
+  map.fitBounds(bounds, { padding: [30, 30] });
+}
+$("#poi-list").innerHTML = TRIP.pois.map(p => `
+  <div class="poi-item">
+    <span><b style="color:${DAY_COLORS[p.day] || DAY_COLORS[0]}">●</b> ${p.name} <span class="muted">${p.note || ""}</span></span>
+    <a href="${gmap(p)}" target="_blank">導航 →</a>
+  </div>`).join("");
+
+// ---------- 分頁切換 ----------
+document.querySelectorAll("nav button").forEach(btn => {
+  btn.onclick = () => {
+    document.querySelectorAll("nav button").forEach(b => b.classList.remove("active"));
+    document.querySelectorAll("section.tab").forEach(s => s.classList.remove("active"));
+    btn.classList.add("active");
+    $("#tab-" + btn.dataset.tab).classList.add("active");
+    if (btn.dataset.tab === "map") { initMap(); setTimeout(() => map.invalidateSize(), 100); }
+  };
+});
+</script>
+</body>
+</html>
