@@ -124,7 +124,7 @@ const TRIP = {
     {
       date: "8/18（二）",
       label: "Day 1・前往釜山",
-      image: "images/0818.png",
+      image: "images/0818.jpg",
       items: [
         { time: "上午", title: "先生台北上班／Phoebe 在家整理行李", note: "公公開車載 Phoebe 去機場（樹林出發）；先生中午下班搭機場捷運" },
         { time: "13:15", title: "桃園機場 T1 會合、華航櫃檯報到", note: "起飛前 2.5 小時" },
@@ -138,7 +138,7 @@ const TRIP = {
     {
       date: "8/19（三）",
       label: "Day 2・BEXCO 評審工作日",
-      image: "images/0819.png",
+      image: "images/0819.jpg",
       items: [
         { time: "07:10", title: "飯店 2 樓早餐 buffet（07:00 開始）", note: "若不含早餐，備案：Blue Shaak BEXCO 店（約 07:30 開）" },
         { time: "07:40", title: "步行前往 BEXCO、報到準備", note: "🚶 從飯店走約 8-10 分" },
@@ -154,7 +154,7 @@ const TRIP = {
     {
       date: "8/20（四）",
       label: "Day 3・授證日→移動到海雲台",
-      image: "images/0820.png",
+      image: "images/0820.jpg",
       items: [
         { time: "上午", title: "Phoebe 與老師外出授證", note: "授證單位會派車送回 Centum Premier Hotel" },
         { time: "上午", title: "先生退房、把行李送到 MS 飯店寄放", note: "🚕 計程車 15 分 ₩8,000-10,000，拖行李別搭地鐵。早餐視出門時間決定" },
@@ -165,11 +165,12 @@ const TRIP = {
         { time: "19:00", title: "晚餐：Puradak 炸雞", note: "🍗 玉米起司＋青陽辣椒美乃滋口味（分店待確認，海雲台附近找）" },
       ],
     },
-    { date: "8/21（五）", label: "Day 4", items: [{ time: "--", title: "待安排", note: "等景點清單" }] },
-    { date: "8/22（六）", label: "Day 5", items: [{ time: "--", title: "待安排", note: "等景點清單" }] },
+    { date: "8/21（五）", label: "Day 4", image: "images/0821.jpg", items: [{ time: "--", title: "待安排", note: "等景點清單" }] },
+    { date: "8/22（六）", label: "Day 5", image: "images/0822.jpg", items: [{ time: "--", title: "待安排", note: "等景點清單" }] },
     {
       date: "8/23（日）",
       label: "Day 6・回程",
+      image: "images/0823.jpg",
       items: [
         { time: "11:00", title: "MS 飯店退房", note: "行李可寄放飯店櫃檯，繼續玩到傍晚" },
         { time: "17:00", title: "前往金海機場", note: "🚕 計程車 40-60 分 ₩35,000 上下（Kakao T 叫車）；省錢備案：地鐵 2 號線→沙上站轉輕軌約 85 分。⚠️傍晚會塞車，別晚於 17:00 出發" },
